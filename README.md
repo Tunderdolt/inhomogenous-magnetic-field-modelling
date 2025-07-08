@@ -1,0 +1,1 @@
+# inhomogenous-magnetic-field-modelling
