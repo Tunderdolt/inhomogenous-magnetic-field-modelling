@@ -35,9 +35,8 @@ g = 0.1
 N_cutoff = 4
 δ = -3:0.001:1
 
-for i = 1:(N_cutoff+1)*2
-    energies[i] = []
-end
+energies = [[] for _ in 1:(N_cutoff+1)*2]
+println(energies)
 
 flipped = true
 
