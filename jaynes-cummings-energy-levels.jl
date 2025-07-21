@@ -2,11 +2,6 @@ using QuantumOptics
 using LinearAlgebra
 using Plots
 
-ω_c = 1.0
-g = 0.1
-N_cutoff = 4
-δ = -3:0.001:1
-
 function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff)
     # Define the Fock basis and Spin basis
     b_fock = FockBasis(N_cutoff)
@@ -34,6 +29,11 @@ function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff)
 end
 
 gr()
+
+ω_c = 1.0
+g = 0.1
+N_cutoff = 4
+δ = -3:0.001:1
 
 for i = 1:(N_cutoff+1)*2
     energies[i] = []
