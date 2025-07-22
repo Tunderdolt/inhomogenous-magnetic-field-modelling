@@ -92,5 +92,5 @@ plot!(
     color=:black,
     linestyle=:dash,
 )
-ylabel!("Energy (E)")
-xlabel!("ω_s/ω_c", show=true, legend=false)
+ylabel!("\$Energy (E)/ħω_c\$", show=true, legend=false)
+xlabel!("\$ω_s/ω_c\$", show=true, legend=false)

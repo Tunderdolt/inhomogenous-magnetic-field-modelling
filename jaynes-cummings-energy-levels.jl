@@ -67,5 +67,5 @@ for i = 1:(N_cutoff+1)*2
         linestyle= i % 2 == 1 ? :solid : :dash,
     )
 end
-ylabel!("Energy (E)")
-xlabel!("Detuning (δ)", show=true)
+ylabel!("\$Energy (E)/ħω_c\$")
+xlabel!("\$Detuning (δ = (ω_s - ω_c) / ω_c )\$", show=true)
