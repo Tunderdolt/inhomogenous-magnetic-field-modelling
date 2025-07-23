@@ -40,7 +40,7 @@ println(energies)
 
 flipped = true
 
-for δ = -3:0.001:1
+for δ = δ
     ω_s = 1.0 + δ
     energy = jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff)
     if energy[1] == energy[2]
@@ -61,11 +61,11 @@ end
 plot()
 for i = 1:(N_cutoff+1)*2
     plot!(
-        -3:0.001:1, 
+        δ, 
         energies[i], label= i % 2 == 1 ? "|$(Int(i/2 + 0.5))↑>" : "|$(Int(i/2))↓>", 
         color=:red, 
         linestyle= i % 2 == 1 ? :solid : :dash,
     )
 end
 ylabel!("\$Energy (E)/ħω_c\$")
-xlabel!("\$Detuning (δ = (ω_s - ω_c) / ω_c )\$", show=true)
+xlabel!("\$Detuning (δ = (ω_s - ω_c) / ω_c )\$", show=true, legend=false)
