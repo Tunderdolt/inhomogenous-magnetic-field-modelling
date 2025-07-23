@@ -22,14 +22,16 @@ function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, add_phase=false)
     Hint = g*(a⊗sp + at⊗sm + a⊗sm + at⊗sp)  # Interaction Hamiltonian
     H = one(b_fock) ⊗ Hatom + Hcavity ⊗ one(b_spin) + Hint
 
-    # Diagonalize the Hamiltonian
-    E, V = eigen(Matrix(H.data))
-
     if add_phase
         # Add a phase factor to the interaction term
-        E .+= 1/2 * ω_s
+        H_matrix = Matrix(H.data) + 1/2 * ω_s * I
+    else
+        H_matrix = Matrix(H.data)
     end
-    
+
+    # Diagonalize the Hamiltonian
+    E, V = eigen(H_matrix)
+        
     return E
 end
 

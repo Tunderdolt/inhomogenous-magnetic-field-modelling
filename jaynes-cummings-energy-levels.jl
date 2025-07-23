@@ -2,7 +2,7 @@ using QuantumOptics
 using LinearAlgebra
 using Plots
 
-function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff)
+function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, add_phase=false)
     # Define the Fock basis and Spin basis
     b_fock = FockBasis(N_cutoff)
     b_spin = SpinBasis(1//2)
@@ -22,9 +22,16 @@ function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff)
     Hint = g*(a⊗sp + at⊗sm + a⊗sm + at⊗sp)  # Interaction Hamiltonian
     H = one(b_fock) ⊗ Hatom + Hcavity ⊗ one(b_spin) + Hint
 
+    if add_phase
+        # Add a phase factor to the interaction term
+        H_matrix = Matrix(H.data) + 1/2 * ω_s * I
+    else
+        H_matrix = Matrix(H.data)
+    end
+
     # Diagonalize the Hamiltonian
-    E, V = eigen(Matrix(H.data))
-    
+    E, V = eigen(H_matrix)
+        
     return E
 end
 
