@@ -22,13 +22,13 @@ function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=false
         global Hatom = (ω_s + im*γ) * sz / 2  # Spin Hamiltonian
         global Hcavity = (ω_c + im*κ) * n  # Cavity Hamiltonian
         global Hint = im*g*(-a⊗sp + at⊗sm + a⊗sm - at⊗sp)  # Interaction Hamiltonian
-        H = Hatom ⊗ one(b_fock) + one(b_spin) ⊗ Hcavity + Hint
     else
         Hatom = ω_s * sz / 2  # Spin Hamiltonian
         Hcavity = ω_c * n  # Cavity Hamiltonian
         Hint = g*( a⊗sp + at⊗sm + a⊗sm + at⊗sp)  # Interaction Hamiltonian
-        H = one(b_spin) ⊗ Hatom + Hcavity ⊗ one(b_fock) + Hint
     end
+
+    H = one(b_fock) ⊗ Hatom + Hcavity ⊗ one(b_spin) + Hint
 
     if add_phase
         # Add a phase factor to the interaction term
