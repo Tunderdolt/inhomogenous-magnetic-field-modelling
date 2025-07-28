@@ -4,8 +4,8 @@ using Plots
 
 function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=false, open_system=false, return_matrix=false)
     # Define the Fock basis and Spin basis
-    b_fock = FockBasis(N_cutoff)
-    b_spin = SpinBasis(1//2)
+    global b_fock = FockBasis(N_cutoff)
+    global b_spin = SpinBasis(1//2)
 
     # Fundamental Operators
     a = destroy(b_fock)  # Cavity annihilation operator
@@ -17,18 +17,17 @@ function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=false
     sm = sigmam(b_spin)  # Spin lowering operator
 
     # Hamiltonian
-    Hint = g*(a⊗sp + at⊗sm + a⊗sm + at⊗sp)  # Interaction Hamiltonian
     if open_system
         # Open system Hamiltonian
-        Hatom = (ω_s + im*γ) * sz / 2  # Spin Hamiltonian
-        Hcavity = (ω_c + im*κ) * n  # Cavity Hamiltonian
-        Hint = g*(a⊗sp + at⊗sm + a⊗sm + at⊗sp)  # Interaction Hamiltonian
-        H = one(b_fock) ⊗ Hatom + Hcavity ⊗ one(b_spin) + Hint
+        global Hatom = (ω_s + im*γ) * sz / 2  # Spin Hamiltonian
+        global Hcavity = (ω_c + im*κ) * n  # Cavity Hamiltonian
+        global Hint = im*g*(-a⊗sp + at⊗sm + a⊗sm - at⊗sp)  # Interaction Hamiltonian
+        H = Hatom ⊗ one(b_fock) + one(b_spin) ⊗ Hcavity + Hint
     else
         Hatom = ω_s * sz / 2  # Spin Hamiltonian
         Hcavity = ω_c * n  # Cavity Hamiltonian
-        Hint = g*(a⊗sp + at⊗sm + a⊗sm + at⊗sp)  # Interaction Hamiltonian
-        H = one(b_fock) ⊗ Hatom + Hcavity ⊗ one(b_spin) + Hint
+        Hint = g*( a⊗sp + at⊗sm + a⊗sm + at⊗sp)  # Interaction Hamiltonian
+        H = one(b_spin) ⊗ Hatom + Hcavity ⊗ one(b_fock) + Hint
     end
 
     if add_phase
@@ -37,21 +36,20 @@ function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=false
     else
         H_matrix = Matrix(H.data)
     end
-
-    # Diagonalize the Hamiltonian
-    E, V = eigen(H_matrix)
     
     if return_matrix
         return H_matrix
     else
+        # Diagonalize the Hamiltonian
+        E, V = eigen(H_matrix)
         return E
     end
 end
 
-ω_c = 1.0
-ω_s = 0.98:0.00005:1.02
-ω_p = 0.98:0.00005:1.02
-g = 0.002
+ω_c = 1.0e9
+ω_s = 0.98e9:0.0001e9:1.02e9
+ω_p = 0.98e9:0.0001e9:1.02e9
+g = 1e6
 N_cutoff = 1
 κ = g/4
 γ = g/4
@@ -62,9 +60,10 @@ T_p = []
 
 for ω_s in ω_s
     for ω_p in ω_p
-        #H = jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=true, open_system=true, return_matrix=true)
+        global H = jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=true, open_system=true, return_matrix=true)
+        T_calc = im * κ * inv(ω_p * I - H[4:-3:1, 4:-3:1])[1, 1]
         #T_calc = tr(inv(ω_p * I - H))
-        T_calc = im*κ * ((ω_p - ω_s - im*γ) / (-g^2 + (ω_p - ω_s - im*γ) * (ω_c - ω_p + im*κ)))
+        #T_calc = im*κ * ((-ω_p + ω_s + im*γ) / (-g^2 + (ω_p - ω_s - im*γ) * (-ω_c + ω_p - im*κ)))
         push!(T_int, T_calc * conj(T_calc))
     end
     push!(T, real(log10.(T_int)))
@@ -72,14 +71,12 @@ for ω_s in ω_s
 end
 
 heatmap(
-    ω_s, 
-    ω_p, 
+    ω_s/ω_c, 
+    ω_p/ω_c, 
     stack(T),
-    xlabel="ω_s", 
-    ylabel="ω_p", 
+    xlabel="\$ω_s/ω_c\$", 
+    ylabel="\$ω_p/ω_c\$", 
     title="Transmission Spectrum",
     color=:thermal,
     colorbar_title="Transmission",
 )
-
-plot!(ω_s, ω_s)
