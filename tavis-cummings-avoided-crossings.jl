@@ -1,6 +1,7 @@
 using QuantumOptics
 using LinearAlgebra
 using Plots
+using BenchmarkTools
 
 function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
     # N: number of two-level systems
@@ -10,7 +11,7 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
 
     # Define the Fock basis and Spin basis
     b_fock = FockBasis(1)
-    global b_spin = [SpinBasis(spin), SpinBasis(spin), SpinBasis(spin)]
+    b_spin = [SpinBasis(spin) for i = 1:N]
 
     # Fundamental Operators
     a = destroy(b_fock)  # Cavity annihilation operator
@@ -22,18 +23,21 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
     sm = [sigmam(x) for x in b_spin]  # Spin lowering operator
 
     # Iterables
-    ω_s = [ω_s - 2 * Δ + i * Δ + im * γ for i = 1:N]  # Spin frequencies with detuning
-    if typeof(g) != Array
+    ω_s = [ω_s + (i-(N+1)/2) * Δ + im * γ for i = 1:N]  # Spin frequencies with detuning
+    if isa(g, Array) == false
         g = fill(g, N)  # If g is a single value, replicate it for all spins
     end
 
     # Hamiltonian
     Hspin = []
     bases = []
-    push!(bases, one(b_fock))  # Start with the Fock basis
+
+    push!(bases, one(b_fock))
+
     for i = 1:N
         push!(bases, one(b_spin[i]))
     end
+
     for i = 1:N
         bases_current = copy(bases)
         bases_current[i+1] = sz[i]/2
@@ -46,6 +50,7 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
 
     bases[1] = n  # Update the Fock basis for the cavity
     bases_current = copy(bases)
+
     while length(bases_current) != 1
         base_int = pop!(bases_current)
         bases_current[end] = bases_current[end] ⊗ base_int
@@ -53,29 +58,65 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
 
     Hcavity = (ω_c + im * κ) * pop!(bases_current)  # Cavity Hamiltonian
 
-    Hint = [im*g[1]*(a⊗sp[1]⊗one(b_spin[2])⊗one(b_spin[3])
-                    + at⊗sm[1]⊗one(b_spin[2])⊗one(b_spin[3])
-                    + a⊗sm[1]⊗one(b_spin[2])⊗one(b_spin[3])
-                    + at⊗sp[1]⊗one(b_spin[2])⊗one(b_spin[3])),
-            im*g[2]*(a⊗one(b_spin[1])⊗sp[2]⊗one(b_spin[3])
-                    + at⊗one(b_spin[1])⊗sm[2]⊗one(b_spin[3])
-                    + a⊗one(b_spin[1])⊗sm[2]⊗one(b_spin[3])
-                    + at⊗one(b_spin[1])⊗sp[2]⊗one(b_spin[3])), 
-            im*g[3]*(a⊗one(b_spin[1])⊗one(b_spin[2])⊗sp[3]
-                    + at⊗one(b_spin[1])⊗one(b_spin[2])⊗sm[3]
-                    + a⊗one(b_spin[1])⊗one(b_spin[2])⊗sm[3]
-                    + at⊗one(b_spin[1])⊗one(b_spin[2])⊗sp[3])]  # Interaction Hamiltonian
+    Hint = []
+    bases_annihilation = copy(bases)
+    bases_annihilation[1] = a
+    bases_creation = copy(bases)
+    bases_creation[1] = -at
+    
+    for i = 1:N
+        bases_current_1 = copy(bases_annihilation)
+        bases_current_2 = copy(bases_creation)
+        bases_current_3 = copy(bases_annihilation)
+        bases_current_4 = copy(bases_creation)
+        bases_current_1[i+1] = sp[i]
+        bases_current_2[i+1] = sm[i]
+        bases_current_3[i+1] = sm[i]
+        bases_current_4[i+1] = sp[i]
+        while length(bases_current_1) != 1
+            base_int_1 = pop!(bases_current_1)
+            bases_current_1[end] = bases_current_1[end] ⊗ base_int_1
+            base_int_2 = pop!(bases_current_2)
+            bases_current_2[end] = bases_current_2[end] ⊗ base_int_2
+            base_int_3 = pop!(bases_current_3)
+            bases_current_3[end] = bases_current_3[end] ⊗ base_int_3
+            base_int_4 = pop!(bases_current_4)
+            bases_current_4[end] = bases_current_4[end] ⊗ base_int_4
+        end
+        push!(Hint, im * g[i] * sum([pop!(bases_current_1), pop!(bases_current_2), pop!(bases_current_3), pop!(bases_current_4)]))  # Spin raising interaction Hamiltonian
+    end
     
     H = sum(Hspin) + Hcavity + sum(Hint)
 
-    H = H + 1/2 * one(basis(H)) * (3* ω_s[2] + 0 * ω_c)  # Add a phase factor to the interaction term
+    H = H + 1/2 * one(basis(H)) * (N * mean(ω_s))  # Add a phase factor to the interaction term
 
-    H_b_sub = SubspaceBasis(basis(H), 
-        [fockstate(b_fock, 0) ⊗ spinup(b_spin[1]) ⊗ spindown(b_spin[2]) ⊗ spindown(b_spin[3]),
-        fockstate(b_fock, 0) ⊗ spindown(b_spin[1]) ⊗ spinup(b_spin[2]) ⊗ spindown(b_spin[3]),
-        fockstate(b_fock, 0) ⊗ spindown(b_spin[1]) ⊗ spindown(b_spin[2]) ⊗ spinup(b_spin[3]),
-        fockstate(b_fock, 1) ⊗ spindown(b_spin[1]) ⊗ spindown(b_spin[2]) ⊗ spindown(b_spin[3]),
-    ])  # Define the subspace basis
+    reduced_hilbert_space = []
+    sub_bases = []
+    push!(sub_bases, fockstate(b_fock, 0))
+    for i = 1:N
+        push!(sub_bases, spindown(b_spin[i]))
+    end
+
+    for i = 1:N
+        current_sub_space = copy(sub_bases)
+        current_sub_space[i+1] = spinup(b_spin[i])
+        while length(current_sub_space) != 1
+            int_sub_space = pop!(current_sub_space)
+            current_sub_space[end] = current_sub_space[end] ⊗ int_sub_space
+        end
+        push!(reduced_hilbert_space, pop!(current_sub_space))  # Reduced Hilbert space
+    end
+
+    sub_bases[1] = fockstate(b_fock, 1)
+
+    while length(sub_bases) != 1
+        int_sub_bases = pop!(sub_bases)
+        sub_bases[end] = sub_bases[end] ⊗ int_sub_bases
+    end
+
+    push!(reduced_hilbert_space, pop!(sub_bases))  # Add the Fock state to the reduced Hilbert space
+
+    H_b_sub = SubspaceBasis(basis(H), reduced_hilbert_space)  # Define the subspace basis
 
     P = projector(H_b_sub, basis(H))  # Project the Hamiltonian onto the subspace
 
@@ -85,31 +126,33 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
 end
 
 N = 3
-g = 1e7
+g = Array([1e7, 1e7, 1e7])
 ω_c = 1e9
 δ = -0.4e9:1e6:0.4e9
 Δ = 0.1e9
-κ = g/4
-γ = g/4
+κ = g[2]/4
+γ = g[2]/4
 
-energies_1 = []
-energies_2 = []
-energies_3 = []
-energies_4 = []
+energies = [[] for _ in 1:N+1]
+
+t1 = time()
 
 for δ in δ
     ω_s = ω_c + δ
-    H = Matrix(TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ).data)# + ω_s * I
-    H = H .* [1 1 1 1; 1 1 1 1; 1 1 1 1; -1 -1 -1 1] # Ensure Hermitian
-    energy = eigen(H).values
-    push!(energies_1, real(energy[1])/ω_c)
-    push!(energies_2, real(energy[2])/ω_c)
-    push!(energies_3, real(energy[3])/ω_c)
-    push!(energies_4, real(energy[4])/ω_c)
+    H = Matrix(TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ).data)
+    energy = eigvals(H)
+    for i = 1:N+1
+        push!(energies[i], real(energy[i]) / ω_c)
+    end
 end 
 
+display(time() - t1)
+
 plot()
-plot!(δ/ω_c, energies_1, label="E1", color=:red)
-plot!(δ/ω_c, energies_2, label="E2", color=:blue)
-plot!(δ/ω_c, energies_3, label="E3", color=:green)
-plot!(δ/ω_c, energies_4, label="E4", color=:orange) 
+for i = 1:N+1
+    plot!(δ/ω_c, energies[i], label="E$i", color=:red)
+end
+
+ylabel!("\$Energy (E)/ħω_c\$")
+xlabel!("\$Detuning (δ)/ħω_c\$")
+plot!(legend=false, title="Tavis-Cummings Model Energies", show=true)
