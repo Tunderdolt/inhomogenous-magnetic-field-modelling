@@ -3,7 +3,7 @@ using LinearAlgebra
 using Plots
 using BenchmarkTools
 
-function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
+function TavisCummings(N; spin=1//2)
     # N: number of two-level systems
     # g: coupling strength
     # ω_c: frequency of the cavity mode
@@ -22,12 +22,6 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
     sp = [sigmap(x) for x in b_spin] # Spin raising operator
     sm = [sigmam(x) for x in b_spin]  # Spin lowering operator
 
-    # Iterables
-    ω_s = [ω_s + (i-(N+1)/2) * Δ + im * γ for i = 1:N]  # Spin frequencies with detuning
-    if isa(g, Array) == false
-        g = fill(g, N)  # If g is a single value, replicate it for all spins
-    end
-
     # Hamiltonian
     Hspin = []
     bases = []
@@ -45,7 +39,7 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
             base_int = pop!(bases_current)
             bases_current[end] = bases_current[end] ⊗ base_int
         end
-        push!(Hspin, ω_s[i] * pop!(bases_current))  # Spin Hamiltonian
+        push!(Hspin, pop!(bases_current))  # Spin Hamiltonian
     end
 
     bases[1] = n  # Update the Fock basis for the cavity
@@ -56,7 +50,7 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
         bases_current[end] = bases_current[end] ⊗ base_int
     end
 
-    Hcavity = (ω_c + im * κ) * pop!(bases_current)  # Cavity Hamiltonian
+    Hcavity = pop!(bases_current)  # Cavity Hamiltonian
 
     Hint = []
     bases_annihilation = copy(bases)
@@ -83,12 +77,10 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
             base_int_4 = pop!(bases_current_4)
             bases_current_4[end] = bases_current_4[end] ⊗ base_int_4
         end
-        push!(Hint, im * g[i] * sum([pop!(bases_current_1), pop!(bases_current_2), pop!(bases_current_3), pop!(bases_current_4)]))  # Spin raising interaction Hamiltonian
+        push!(Hint, sum([pop!(bases_current_1), pop!(bases_current_2), pop!(bases_current_3), pop!(bases_current_4)]))  # Spin raising interaction Hamiltonian
     end
-    
-    H = sum(Hspin) + Hcavity + sum(Hint)
 
-    H = H + 1/2 * one(basis(H)) * (N * mean(ω_s))  # Add a phase factor to the interaction term
+    H = Hcavity + sum(Hspin) + sum(Hint)
 
     reduced_hilbert_space = []
     sub_bases = []
@@ -120,26 +112,41 @@ function TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ; spin=1//2)
 
     P = projector(H_b_sub, basis(H))  # Project the Hamiltonian onto the subspace
 
-    H = P * H * P'  # Projected Hamiltonian
+    return Dict("Hcav" => Hcavity, "Hspin" => Hspin, "Hint" => Hint, "Projector" => P)
+end
 
+function HamiltonianGenerator(N, basis, g, ω_c, ω_s_central, Δ, κ, γ)
+    if isa(g, Array) == false
+        g = fill(g, N)
+    end
+
+    ω_s = [ω_s_central + i * Δ for i = -N/2:1:N/2]
+
+    Hcavity = (ω_c + im * κ) * basis["Hcav"]
+    Hspin = sum([(ω_s[i] + (im * γ)) .* basis["Hspin"][i] for i = 1:N])
+    Hint = sum(im .* g .* basis["Hint"])
+
+    H = basis["Projector"] * (Hcavity + Hspin + Hint + (N/2 * ω_s_central * one(Hcavity))) * basis["Projector"]'
+    
     return H
 end
 
-N = 3
-g = Array([1e7, 1e7, 1e7])
+N = 9
+g = 1e7
 ω_c = 1e9
-δ = -0.4e9:1e6:0.4e9
-Δ = 0.1e9
-κ = g[2]/4
-γ = g[2]/4
+δ = -0.1e9:1e6:0.1e9
+Δ = 0.2e8
+κ = g/4
+γ = g/4
 
 energies = [[] for _ in 1:N+1]
+H_basis = TavisCummings(N)
 
 t1 = time()
 
 for δ in δ
     ω_s = ω_c + δ
-    H = Matrix(TavisCummings(N, g, ω_c, ω_s, Δ, κ, γ).data)
+    H = Matrix(HamiltonianGenerator(N, H_basis, g, ω_c, ω_s, Δ, κ, γ).data)
     energy = eigvals(H)
     for i = 1:N+1
         push!(energies[i], real(energy[i]) / ω_c)
@@ -150,9 +157,9 @@ display(time() - t1)
 
 plot()
 for i = 1:N+1
-    plot!(δ/ω_c, energies[i], label="E$i", color=:red)
+    plot!(δ/ω_c, energies[i], color=:red)
 end
 
 ylabel!("\$Energy (E)/ħω_c\$")
-xlabel!("\$Detuning (δ)/ħω_c\$")
+xlabel!("\$Detuning (δ)/ω_c\$")
 plot!(legend=false, title="Tavis-Cummings Model Energies", show=true)
