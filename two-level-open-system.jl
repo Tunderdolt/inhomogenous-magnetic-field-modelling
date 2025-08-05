@@ -1,51 +1,93 @@
+#=
+This script uses the Jaynes-Cummings Model to evaluate the forward voltage gain 
+or S₂₁ parameter of the scattering matrix for varying values of Pump and Probe
+frequencies. This is done for a two-level system only, ie the transistion 
+between the |0↑> and |1↓> states. However, it is important to note the script
+allows for maximally more than 1 photon in the system - this can be achieved by
+changing the value of N_cutoff. 
+
+The output is a heatmap showing the values of |S₂₁|² for the 2 varying 
+dimensions.
+
+S. J. Binns
+=#
+
+# Packages =====================================================================
 using QuantumOptics
 using LinearAlgebra
 using Plots
 
-function jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=false, open_system=false, return_matrix=false)
-    # Define the Fock basis and Spin basis
-    global b_fock = FockBasis(N_cutoff)
-    global b_spin = SpinBasis(1//2)
+# Functions ====================================================================
+function jaynesCummingsEnergies(
+        ω_c, ω_s, g, N_cutoff, κ, γ; 
+        add_phase=false, open_system=false, return_matrix=false
+    )
+    """Returns the Hamiltonian that describes a 2 level system for the jump of
+    states between |0↑> and |1↓>.
 
-    # Fundamental Operators
-    a = destroy(b_fock)  # Cavity annihilation operator
-    at = create(b_fock)  # Cavity creation operator
-    n = number(b_fock)  # Cavity number operator
+    Parameters
+    ----------
+    ω_c :: Float
+        Cavity/photon frequency (Hz)
+    ω_s :: Float
+        Spin/atom frequency (Hz)
+    g :: Float
+        Interaction factor
+    N_cutoff :: Int
+        The maximum number of photons in the system
+    κ :: Float
+        Cavity dissipation rate
+    γ :: Float
+        Spin dissipation rate
+    add_phase :: Bool = false 
+        Condition for adding a phase term to the system
+    open_system :: Bool = false
+        Condition for the system being open and allowing dissipation
+    return_matrix :: Bool = false
+        Condition to return the Hamiltonian as a matrix
+    """
+    b_fock = FockBasis(N_cutoff)
+    b_spin = SpinBasis(1//2)
 
-    sz = sigmaz(b_spin)  # Spin z operator
-    sp = sigmap(b_spin)  # Spin raising operator
-    sm = sigmam(b_spin)  # Spin lowering operator
+    # Annihilation operator (a)
+    a = destroy(b_fock)
+    # Creation operator (a†)
+    at = create(b_fock) 
+    # Number operator (a†a)
+    n = number(b_fock) 
 
-    # Hamiltonian
+    # Spin z operator (σz)
+    sz = sigmaz(b_spin) 
+    # Spin raising operator (σ₊)
+    sp = sigmap(b_spin) 
+    # Spin lowering operator (σ₋)
+    sm = sigmam(b_spin)
+
     if open_system
-        # Open system Hamiltonian
-        global Hatom = (ω_s + im*γ) * sz / 2  # Spin Hamiltonian
-        global Hcavity = (ω_c + im*κ) * n  # Cavity Hamiltonian
-        global Hint = im*g*(-a⊗sp + at⊗sm + a⊗sm - at⊗sp)  # Interaction Hamiltonian
+        Hatom = (ω_s + im*γ) * sz / 2 
+        Hcavity = (ω_c + im*κ) * n 
+        Hint = im*g*(a⊗sp - at⊗sm + a⊗sm - at⊗sp)
     else
-        Hatom = ω_s * sz / 2  # Spin Hamiltonian
-        Hcavity = ω_c * n  # Cavity Hamiltonian
-        Hint = g*( a⊗sp + at⊗sm + a⊗sm + at⊗sp)  # Interaction Hamiltonian
+        Hatom = ω_s * sz / 2 
+        Hcavity = ω_c * n 
+        Hint = im*g*(a⊗sp - at⊗sm + a⊗sm - at⊗sp)
     end
 
-    H = one(b_fock) ⊗ Hatom + Hcavity ⊗ one(b_spin) + Hint
+    H = Matrix((one(b_fock) ⊗ Hatom + Hcavity ⊗ one(b_spin) + Hint).data)
 
     if add_phase
-        # Add a phase factor to the interaction term
-        H_matrix = Matrix(H.data) + 1/2 * ω_s * I
-    else
-        H_matrix = Matrix(H.data)
+        H = H + 1/2 * ω_s * I
     end
     
     if return_matrix
-        return H_matrix
+        return H
     else
-        # Diagonalize the Hamiltonian
-        E, V = eigen(H_matrix)
+        E = eigvals(H)
         return E
     end
 end
 
+# Main =========================================================================
 ω_c = 1.0e9
 ω_s = 0.98e9:0.0001e9:1.02e9
 ω_p = 0.98e9:0.0001e9:1.02e9
@@ -60,10 +102,11 @@ T_p = []
 
 for ω_s in ω_s
     for ω_p in ω_p
-        global H = jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=true, open_system=true, return_matrix=true)
+        H = jaynesCummingsEnergies(
+            ω_c, ω_s, g, N_cutoff, κ, γ; 
+            add_phase=true, open_system=true, return_matrix=true
+        )
         T_calc = im * κ * inv(ω_p * I - H[4:-3:1, 4:-3:1])[1, 1]
-        #T_calc = tr(inv(ω_p * I - H))
-        #T_calc = im*κ * ((-ω_p + ω_s + im*γ) / (-g^2 + (ω_p - ω_s - im*γ) * (-ω_c + ω_p - im*κ)))
         push!(T_int, T_calc * conj(T_calc))
     end
     push!(T, real(log10.(T_int)))
