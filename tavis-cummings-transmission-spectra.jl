@@ -11,12 +11,15 @@ dimensions.
 S. J. Binns
 =#
 
+# Packages =====================================================================
 using QuantumOptics
 using LinearAlgebra, ArnoldiMethod, SparseArrays
 using Plots
 using BenchmarkTools
+using TimerOutputs
 
-function TavisCummings(N, g, ω_c, ω_s, κ, γ; spin=1//2, open_system=false)
+# Functions ====================================================================
+function TavisCummings(N, g, ω_c, ω_s, κ, γ; open_system=false)
 
     if open_system == false
         γ = 0
@@ -47,12 +50,13 @@ function TavisCummings(N, g, ω_c, ω_s, κ, γ; spin=1//2, open_system=false)
     return H
 end
 
+# Main =========================================================================
 @benchmark begin
-N = 8
+N = 100
 g = 1e7
 ω_c = 1e9
-ω_s = 0.8e9:2e6:1.2e9
-ω_p = 0.8e9:2e6:1.2e9
+ω_s = 0.5e9:4e6:1.5e9
+ω_p = 0.5e9:4e6:1.5e9
 κ = mean(g)/4
 γ = g/4
 
@@ -60,14 +64,19 @@ T = []
 T_int = []
 T_p = []
 
-to = TimerOutput()
-
 for ω_s in ω_s
     for ω_p in ω_p
-        @timeit to "H" H = TavisCummings(N, g, ω_c, ω_s, κ, γ; open_system=true)
-        @timeit to "1" T_calc = im * κ * inv(ω_p * I - H.data)[1, 1]
+        H = TavisCummings(N, g, ω_c, ω_s, κ, γ; open_system=true)
         H_int = ω_p * I - H.data
-        @timeit to "2" T_calc = im * κ * (H_int[1, 1] + H_int[1, 2:end]' * inv(Diagonal(H_int[2:end, 2:end])) * H_int[2:end, 1])^-1
+        T_calc = (
+            im * κ 
+            * (
+                H_int[1, 1] 
+                + H_int[1, 2:end]' 
+                * inv(Diagonal(H_int[2:end, 2:end])) 
+                * H_int[2:end, 1]
+            )^-1
+        )
         push!(T_int, T_calc * conj(T_calc))
     end
     push!(T, real(log10.(T_int)))
@@ -85,5 +94,4 @@ heatmap(
     colorbar_title="Transmission",
     show=true
 )
-
-end seconds=5
+end seconds=1000  

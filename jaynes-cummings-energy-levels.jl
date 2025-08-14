@@ -13,6 +13,7 @@ S. J. Binns
 using QuantumOptics
 using LinearAlgebra
 using Plots
+using BenchmarkTools
 
 # Functions ====================================================================
 function jaynesCummingsEnergies(
@@ -85,9 +86,10 @@ function jaynesCummingsEnergies(
 end
 
 # Main =========================================================================
+@benchmark begin
 ω_c = 1.0
 g = 0.1
-N_cutoff = 4
+N_cutoff = 2
 δ = -3:0.001:1
 κ = 0
 γ = 0
@@ -127,3 +129,4 @@ for i = 1:(N_cutoff+1)*2
 end
 ylabel!("\$Energy (E)/ħω_c\$")
 xlabel!("\$Detuning (δ = (ω_s - ω_c) / ω_c )\$", show=true, legend=false)
+end samples=1000 seconds=1000
