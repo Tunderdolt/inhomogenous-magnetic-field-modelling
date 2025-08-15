@@ -38,6 +38,30 @@ This function does apply quantum operator to it's output, but that is very limit
 Returns the Hamiltonian for the Tavis-Cummings Model as an operator from the [QuantumOptics.jl package].
 
 ## Scripts
+All benchmarking results have been made on my own HP Envy with 16GB of RAM and an intel evo i5 processing core.
+
+### jaynes-cummings-energy-levels
+This script uses the [jaynesCummingsEnergies](#jaynesCummingsEnergies(&#969;<sub>c</sub>,-&#969;<sub>s</sub>,-g,-N_cutoff,-&#954;,-&#611;;-add_phase=false,-open_system=false,-return_matrix=false)) function to plot the eigenergies of the system for any number of photons. N_cutoff can be changed to increase the number of states plotted.
+<img width="597" height="393" alt="image" src="https://github.com/user-attachments/assets/3f87d9cc-6414-4f57-9709-8e14581a5481" />
+<img width="538" height="172" alt="image" src="https://github.com/user-attachments/assets/4a07e7ef-20a3-4837-847a-255f77d04d44" />
+
+Above is shown the output for this script as well as the benchmarking results for 1000 samples, suggesting it should be expected that the code should run within 30ms for those conditions.
+
+### jaynes-cummings-avoided-crossings
+This script works almost identically to [jaynes-cummings-energy-levels](#jaynes-cummings-energy-levels), the only differences being that the add_phase arguement is now true, and we zoom in on the avoided crossing area of the graph rather than showing the whole graph.
+<img width="594" height="392" alt="image" src="https://github.com/user-attachments/assets/167bdd48-bda1-4d52-b159-37502a158203" />
+<img width="534" height="171" alt="image" src="https://github.com/user-attachments/assets/d507dec3-7808-416e-8b5e-30d3e79cb0c1" />
+
+Above is shown the output for this script as well as the benchmarking results for 1000 samples, suggesting it should be expected that the code should run within 60ms for those conditions.
+
+### jaynes-cummings-transmission-spectra
+This script calculates the forward voltage gain of the system, often represented as $S_{21}$ as described by the scattering ($\mathbf{S}$) matrix as the values of spin frequency ($\omega_s$) and probe frequency ($\omega_p$) vary and plots this as a heatmap.
+<img width="592" height="396" alt="image" src="https://github.com/user-attachments/assets/bc6de100-b898-423a-893c-b6f286f74c7e" />
+<img width="532" height="172" alt="image" src="https://github.com/user-attachments/assets/1658446a-f920-4fbc-bba0-ba83bdc5eeac" />
+
+### tavis-cummings-avoided-crossings
+2 spins:
+<img width="529" height="178" alt="image" src="https://github.com/user-attachments/assets/af9b2408-bad2-4d69-b8d3-550ff658527d" />
 
 
 [QuantumOptics.jl package]: https://qojulia.org/
