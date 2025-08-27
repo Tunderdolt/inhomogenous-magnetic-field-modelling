@@ -31,7 +31,7 @@ $$= (A - BD^{-1}B^\dagger)^{-1}$$
 Furthermore, because D is a diagonal matrix, this can be further simplified to
 
 ```math
-= A - \sum^{N}_{i=1} \frac{B_iB_i^{\dagger}}{D_{ii}}
+= \left(A - \sum^{N}_{i=1} \frac{B_iB_i^{\dagger}}{D_{ii}}\right)^{-1}
 ```
 
 This is a highly programming efiicient version of the equation especially when compared to solutions involving an inverse operation.
