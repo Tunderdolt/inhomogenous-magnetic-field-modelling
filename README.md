@@ -11,7 +11,7 @@ Most of this has been done previously, however for most of the previous work it 
 ## Functions
 All scripts that use the same model use the same functions which will be described here.
 
-### jaynesCummings(&#969;<sub>c</sub>, &#969;<sub>s</sub>, g, N_cutoff, &#954;, &#611;; open_system=false)
+### jaynes_cummings(&#969;<sub>c</sub>, &#969;<sub>s</sub>, g, N_cutoff, &#954;, &#611;; open_system=false)
 This function describes the Jaynes-Cummings Hamiltonian as below:
 
 $$\mathcal{H} = \hbar(\omega_{c} + i\kappa)a^{\dagger}a + \frac{\hbar}{2}(\omega_{s} + i\gamma)\sigma_{\mathcal{z}} + i\hbar g(\sigma_{+} + \sigma_{-})(a + a^\dagger)$$
@@ -22,7 +22,7 @@ All Operators are constant and so defined within the function with use of the [Q
 
 Will standardly return eigenenergies of the system.
 
-### TavisCummings(N, g, &#969;<sub>c</sub>, &#969;<sub>s</sub>, &#954;, &#611;; open_system=false)
+### tavis_cummings(N, g, &#969;<sub>c</sub>, &#969;<sub>s</sub>, &#954;, &#611;; open_system=false)
 This function describes the Tavis-Cummings Hamiltonian as below:
 
 $$\mathcal{H} = \hbar(\omega_{c} + i\kappa)a^{\dagger}a + \frac{\hbar}{2}\sum_{j=1}^{N}{(\omega_{s} + i\gamma)\_{j}\sigma_{j}^{\mathcal{z}}} + i\hbar \sum_{j=1}^{N} g_{j}(\sigma_{j}^{+} + \sigma_{j}^{-})(a + a^\dagger)$$
@@ -64,16 +64,21 @@ This script calculates the forward voltage gain of the system, often represented
 
 
 ### tavis-cummings-avoided-crossings
-2 spins:
+This script is identical to [jaynes-cummings-avoided-crossings](#jaynes-cummings-avoided-crossings), the only difference is it uses the Tavis Cummings model instead of the Jaynes Cummings model, ie allowing for N number of spins.
 
+<img width="594" height="394" alt="image" src="https://github.com/user-attachments/assets/1625e22d-be12-471d-a28e-6bbe4a3c3b17" />
 <img width="529" height="178" alt="image" src="https://github.com/user-attachments/assets/af9b2408-bad2-4d69-b8d3-550ff658527d" />
 
+Benchmarking needs to be redone**
+
 ### tavis-cummings-transmission-spectra
+This script is identical to [jaynes-cummings-transmission-spectra](#jaynes-cummings-transmission-spectra), the only difference is it uses the Tavis Cummings model instead of the Jaynes Cummings model, ie allowing for N number of spins.
 
 100 spins - t-spec:
 
+<img width="625" height="415" alt="image" src="https://github.com/user-attachments/assets/0c09e915-f210-40d3-aa82-270198e979c0" />
 <img width="526" height="169" alt="image" src="https://github.com/user-attachments/assets/5daca2b5-0ea7-431f-8719-0a8d03b47021" />
 
-
+Benchmarking needs to be redone**
 
 [QuantumOptics.jl package]: https://qojulia.org/
