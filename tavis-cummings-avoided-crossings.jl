@@ -4,7 +4,7 @@ using Plots
 using BenchmarkTools
 using TimerOutputs
 
-function TavisCummings(N, g, ω_c, ω_s, κ, γ; spin=1//2, open_system=false)
+function tavis_cummings(N, g, ω_c, ω_s, κ, γ; spin=1//2, open_system=false)
 
     if open_system == false
         γ = 0
@@ -35,8 +35,7 @@ function TavisCummings(N, g, ω_c, ω_s, κ, γ; spin=1//2, open_system=false)
     return H
 end
 
-
-N = 8
+N = 2
 g = 1e7
 ω_c = 1e9
 δ = -0.1e9:1e6:0.1e9
@@ -49,7 +48,7 @@ energies = [[] for _ in 1:N+1]
 
 for δ in δ
     ω_s = [ω_c + δ + Δ * (i-N/2) for i in 1:N]
-    H = Matrix(TavisCummings(N, g, ω_c, ω_s, κ, γ; open_system=false).data)
+    H = Matrix(tavis_cummings(N, g, ω_c, ω_s, κ, γ; open_system=false).data)
     energy = eigvals(H)
     for i = 1:N+1
         push!(energies[i], real(energy[i]) / ω_c)

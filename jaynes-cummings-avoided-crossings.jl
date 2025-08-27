@@ -12,12 +12,10 @@ S. J. Binns
 using QuantumOptics
 using LinearAlgebra
 using Plots
+using BenchmarkTools
 
 # Functions ====================================================================
-function jaynesCummingsEnergies(
-        ω_c, ω_s, g, N_cutoff, κ, γ; 
-        add_phase=false, open_system=false, return_matrix=false
-    )
+function jaynes_cummings(ω_c, ω_s, g, N_cutoff, κ, γ; open_system=false)
     """Returns the Hamiltonian that describes a 2 level system for the jump of
     states between |0↑> and |1↓>.
 
@@ -35,12 +33,13 @@ function jaynesCummingsEnergies(
         Cavity dissipation rate
     γ :: Float
         Spin dissipation rate
-    add_phase :: Bool = false 
-        Condition for adding a phase term to the system
     open_system :: Bool = false
         Condition for the system being open and allowing dissipation
-    return_matrix :: Bool = false
-        Condition to return the Hamiltonian as a matrix
+    
+    Returns
+    -------
+    H :: Matrix{Complex{Float64}}
+        The Hamiltonian matrix for the system
     """
     b_fock = FockBasis(N_cutoff)
     b_spin = SpinBasis(1//2)
@@ -59,28 +58,18 @@ function jaynesCummingsEnergies(
     # Spin lowering operator (σ₋)
     sm = sigmam(b_spin)
 
-    if open_system
-        Hatom = (ω_s + im*γ) * sz / 2 
-        Hcavity = (ω_c + im*κ) * n 
-        Hint = im*g*(a⊗sp + at⊗sm - a⊗sm - at⊗sp)
-    else
-        Hatom = ω_s * sz / 2 
-        Hcavity = ω_c * n 
-        Hint = g*(a⊗sp + at⊗sm - a⊗sm - at⊗sp)
+    if open_system == false
+        γ = 0
+        κ = 0
     end
+    
+    Hatom = (ω_s + im*γ) * sz / 2 
+    Hcavity = (ω_c + im*κ) * n 
+    Hint = im*g*(a⊗sp - at⊗sm + a⊗sm - at⊗sp)
 
     H = Matrix((one(b_fock) ⊗ Hatom + Hcavity ⊗ one(b_spin) + Hint).data)
 
-    if add_phase
-        H = H + 1/2 * ω_s * I
-    end
-    
-    if return_matrix
-        return H
-    else
-        E = eigvals(H)
-        return E
-    end
+    return H
 end
 
 # Main =========================================================================
@@ -95,7 +84,8 @@ energies_1 = []
 energies_2 = []
 
 for ω_s in 0.8:0.01:1.2
-    energy = jaynesCummingsEnergies(ω_c, ω_s, g, N_cutoff, κ, γ; add_phase=true)
+    H = jaynes_cummings(ω_c, ω_s, g, N_cutoff, κ, γ) + 1/2 * ω_s * I
+    energy = eigvals(H)
     push!(energies_1, energy[2])
     push!(energies_2, energy[3])
 end 
