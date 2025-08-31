@@ -2,21 +2,21 @@
 
 Our Hamiltonian can be represented as:
 
-$$\mathcal{H}=\begin{bmatrix} A & B \\\ C & D \end{bmatrix}$$
+$$\mathcal{H}=\begin{pmatrix} A & B \\\ C & D \end{pmatrix}$$
 
 Where $A$ is a scalar, $B$ is a row vector, $C$ is a column vector, $C = B^{\dagger}$, and $D$ is a diagonal matrix. This is known as a block matrix. Please note that this is only true for our single excitation subspace.
 
 We are strictly concerned with $inv(\omega_p\mathbf{I} - \mathcal{H})_{ij=11}$, which can still be represented as the same block matrix, with constants of the same type.
 
-$$\begin{bmatrix} A & B \\\ C & D \end{bmatrix}^{-1}_{ij=11} = \frac{1}{det(AD - BC)}det(D)$$
+$$\begin{pmatrix} A & B \\\ C & D \end{pmatrix}^{-1}_{ij=11} = \frac{1}{det(AD - BC)}det(D)$$
 
 As the determinants of matrices are commutative, and $det(M^{-1}) = det(M)^{-1}$,
 
-$$\begin{vmatrix} A & B \\\ C & D \end{vmatrix} = det(D) \begin{vmatrix} A & B \\\ C & D \end{vmatrix} det(D^{-1})$$
+$$det\begin{pmatrix} A & B \\\ C & D \end{pmatrix} = det(D) det\begin{pmatrix} A & B \\\ C & D \end{pmatrix} det(D^{-1})$$
 
-$$= det(D) \begin{vmatrix} A & B \\\ C & D \end{vmatrix} \begin{vmatrix} 1 & 0 \\\ -D^{-1}C & D^{-1} \end{vmatrix}$$
+$$= det(D) det\begin{pmatrix} A & B \\\ C & D \end{pmatrix} det\begin{pmatrix} 1 & 0 \\\ -D^{-1}C & D^{-1} \end{pmatrix}$$
 
-$$= det(D) \begin{vmatrix} A - BD^{-1}C & BD^{-1} \\\ 0 & DD^{-1} \end{vmatrix}$$
+$$= det(D) det\begin{pmatrix} A - BD^{-1}C & BD^{-1} \\\ 0 & DD^{-1} \end{pmatrix}$$
 
 $$= det(D)det(A - BD^{-1}C)$$
 
@@ -35,3 +35,33 @@ Furthermore, because D is a diagonal matrix, this can be further simplified to
 ```
 
 This is a highly programming efiicient version of the equation especially when compared to solutions involving an inverse operation.
+
+A suspicious result may be the following:
+
+$$ det(D^{-1}) = det\begin{pmatrix} 1 & 0 \\\ -D^{-1}C & D^{-1} \end{pmatrix}$$
+
+In order to do this we want a transformation matrix that takes our block matrix and converts it to an upper right matrix
+
+$$ R = \begin{pmatrix} I & 0 \\\ D^{-1}C & I \end{pmatrix} $$
+
+$$ M = det\begin{pmatrix} 1 & 0 \\\ -D^{-1}C & D^{-1} \end{pmatrix} $$
+
+$$ MR = \begin{pmatrix} 1 & 0 \\\ -D^{-1}C & D^{-1} \end{pmatrix} \ \begin{pmatrix} I & 0 \\\ D^{-1}C & I \end{pmatrix} $$
+
+$$ = \begin{pmatrix} I & 0 \\\ -D^{-1}C + D^{-1}C & D^{-1} \end{pmatrix} $$ 
+
+$$ = \begin{pmatrix} I & 0 \\\ 0 & D^{-1} \end{pmatrix} $$
+
+$$ det(MR) = det(D^{-1}) $$
+
+But, also by the rules of multiplacativity for determinants
+
+$$ det(MR) = det(M)det(R) $$
+
+$$ det(R) = det(II) = 1 $$
+
+$$ => det(MR) = det(M) $$
+
+$$ \therefore \ det\begin{pmatrix} 1 & 0 \\\ -D^{-1}C & D^{-1} \end{pmatrix} = det(D^{-1}) $$
+
+QED
