@@ -1,83 +1,103 @@
 ### Prove 
 ```math
-(\omega_p I - \mathcal{H})^{-1}_{ij=11} = \begin{pmatrix} \alpha & \mathcal{B} \\\ \Gamma & \Delta \end{pmatrix}^{-1}_{ij=11} = \left(\alpha - \sum^{N}_{i=1} \frac{\mathcal{B}_i\Gamma_i}{\Delta_{ii}}\right)^{-1}
+T = (\omega_p I - \mathcal{H})^{-1}_{ij=11} \equiv \begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}^{-1}_{ij=11} = \left(\alpha - \sum^{N}_{i=1} \frac{B_i\Gamma_i}{\Delta_{ii}}\right)^{-1}
 ```
 
-### Where $\mathcal{H}$ is a Hamiltonian, and
+### Where $\omega_p \ \epsilon \ &#8477;$ and $\mathcal{H}$ is the Tavis-Cummings Hamiltonian in the single excitation subspace Hamiltonian, and
 
-$$\begin{pmatrix} \alpha & \mathcal{B} \\\ \Gamma & \Delta \end{pmatrix}$$ 
+$$\begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}$$ 
 
 ### is a block matrix.
 ##
+### Preliminaries
 
-Our Hamiltonian can be represented as:
+For the single excitation subspace $\mathcal{H}$ (and hence $\omega_pI - \mathcal{H}$) have an arrowhead structure, i.e. the first row and column and the leading diagonal are the only populated elements within the system
 
-$$\mathcal{H}=\begin{pmatrix} a & B \\\ C & D \end{pmatrix}$$
+```math
+\mathcal{H} \;=\;
+\begin{pmatrix}
+a & b_2 & b_3 & b_4 & \cdots & b_n \\
+c_2 & d_2 & 0 & 0 & \cdots & 0\\
+c_3 & 0 & d_3 & 0 & \cdots & 0\\
+c_4 & 0 & 0 & d_4 & \cdots & 0\\
+\vdots & \vdots & \vdots & \vdots & \ddots & 0 \\
+c_n & 0 & 0 & 0 & 0 & d_n
+\end{pmatrix}
+```
 
-Where $a$ is a scalar, $B$ is a row vector, $C$ is a column vector, $C = B^{\dagger}$, and $D$ is a diagonal matrix. This is known as a block matrix. Please note that this is only true for our single excitation subspace.
+It is convenient for us to define the following
 
-We are strictly concerned with $inv(\omega_p\mathbf{I} - \mathcal{H})_{ij=11}$, which can still be represented as the same block matrix, with constants of the same type.
+$$ \Theta = \omega_pI - \mathcal{H} = \begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix} $$
+
+Where this is a block matrix. $\alpha$ is a scalar, $B$ is a row vector of size $1 \times (N-1))$, $\Gamma$ is a column vector or size $(N-1) \times 1$, and $\Delta$ is a square diagonal matrix of size $(N-1) \times (N-1)$, and N is the number of spins in the system.
+
+Now, we want to find $T$, which is defined as the following
+
+```math
+T = \left(\omega_pI - \mathcal{H}\right)^{-1}_{ij=11} = \begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}^{-1}_{ij=11}
+```
+
+$$ T = \frac{det(\Delta)}{det(\Theta)} $$
+
+Now, $det(\Delta)$ is trivial as $\Delta$ is a diagonal matrix, however finding an expression for $det(\Theta)$ is more challenging.
+
+##
+### Derivation of the Schur Complement
 
 Let
 
-$$ M = \begin{pmatrix} A_n & B \\\ C & D_m \end{pmatrix} $$
+$$ \mathcal{M} = \begin{pmatrix} \mathcal{A} & \mathcal{B} \\\ \mathcal{C} & \mathcal{D} \end{pmatrix} $$
 
-Where $A_n$ is a square matrix of dimensions $n \times n$, $B$ is a matrix of size $n \times m$, $C$ is a matrix of size $m \times n$, and $D_m$ is a square matrix of size $m \times m$.
+Where $\mathcal{A}$ is a square matrix of dimensions $n \times n$, $\mathcal{B}$ is a matrix of size $n \times m$, $\mathcal{C}$ is a matrix of size $m \times n$, and $\mathcal{D}$ is a square matrix of size $m \times m$.
 
 Also let us define the upper right transformation matrix as
 
-$$ R = \begin{pmatrix} I_n & 0 \\\ -D_{m}^{-1}C & I_m \end{pmatrix} $$
+$$ \mathcal{R} = \begin{pmatrix} I_n & 0 \\\ -\mathcal{D}^{-1}\mathcal{C} & I_m \end{pmatrix} $$
 
 Such that
 
-$$ MR = \begin{pmatrix} A_n & B \\\ C & D_m \end{pmatrix} \begin{pmatrix} I_n & 0 \\\ -D_{m}^{-1}C & I_m \end{pmatrix} $$
+$$ \mathcal{MR} = \begin{pmatrix} \mathcal{A} & \mathcal{B} \\\ \mathcal{C} & \mathcal{D} \end{pmatrix} \begin{pmatrix} I_n & 0 \\\ -\mathcal{D}^{-1}\mathcal{C} & I_m \end{pmatrix} $$
 
-$$ = \begin{pmatrix} A_n - BD_{m}^{-1}C & B \\\ C - D_{m}D_{m}^{-1}C & D_m \end{pmatrix} $$
+$$ = \begin{pmatrix} \mathcal{A} - \mathcal{BD}^{-1}\mathcal{C} & \mathcal{B} \\\ \mathcal{C} - \mathcal{D}\mathcal{D}^{-1}\mathcal{C} & \mathcal{D} \end{pmatrix} $$
 
-$$ = \begin{pmatrix} A_n - BD_{m}^{-1}C & B \\\ 0 & D_m \end{pmatrix} $$
+$$ = \begin{pmatrix} \mathcal{A} - \mathcal{BD}^{-1}\mathcal{C} & \mathcal{B} \\\ 0 & \mathcal{D} \end{pmatrix} $$
 
 By the distributivity of determinants
 
-$$ det(MR) = det(M)det(R) $$
+$$ det(\mathcal{MR}) = det(\mathcal{M})det(\mathcal{R}) $$
 
-$$ det(R) = det(I_{n}I_{m}) = det(I_{n})det(I_{m}) = 1 $$
+$$ det(\mathcal{R}) = det(I_{n}I_{m}) = det(I_{n})det(I_{m}) = 1 $$
 
-$$ \therefore \ det(M) = det(MR) $$
+$$ \therefore \ det(\mathcal{M}) = det(\mathcal{MR}) $$
 
-$$ \implies det \begin{pmatrix} A_n & B \\\ C & D_n \end{pmatrix} = det \begin{pmatrix} A_n - BD_{m}^{-1}C & B \\\ 0 & D_m \end{pmatrix} $$
+$$ \implies det \begin{pmatrix} \mathcal{A} & \mathcal{B} \\\ \mathcal{C} & \mathcal{D} \end{pmatrix} = det \begin{pmatrix} \mathcal{A} - \mathcal{BD}^{-1}\mathcal{C} & \mathcal{B} \\\ 0 & \mathcal{D} \end{pmatrix} $$
 
-$$ = det \left[ \left(A_n - BD_{m}^{-1}C \right) D_{m} \right]$$
+$$ = det \left[ \left(\mathcal{A} - \mathcal{BD}^{-1}\mathcal{C} \right) \mathcal{D} \right]$$
 
-$$ \boxed{det(M) = det \left(A_n - BD_{m}^{-1}C \right) det \left(D_{m}\right)} $$
+$$ \boxed{det(\mathcal{M}) = det \left(\mathcal{A} - \mathcal{BD}^{-1}\mathcal{C} \right) det \left(\mathcal{D}\right)} $$
 
-Now we have an expression for the determinant of a block matrix, let us consider the system defined by
+Which is the Schur Complement.
 
-$$\mathcal{M} = \omega_p I - \mathcal{H} $$
+##
 
-Which we will define as a block matrix in the following way
+Now, returning back to the previous expression
 
-$$ \mathcal{M} = \begin{pmatrix} \alpha & \mathcal{B} \\\ \Gamma & \Delta \end{pmatrix} $$
+$$ T = \frac{det(\Delta)}{det(\Theta)} $$
 
-Where $\alpha$ is a scalar, $\mathcal{B}$ is a row vector of size $1 \times \nu$, $\Gamma$ is a column vector of size $\nu \times 1$ and $\Delta$ is a diagonal square matrix of size $\nu \times \nu$
+Using the Schur Complement, it can be shown that
 
-We desire a solution to
+$$ det(\Theta) = det\left( \alpha - B \Delta^{-1} \Gamma\right) det( \Delta ) $$
 
-$$ \mathcal{M}_{ij=11}^{-1} = \frac{1}{det(\mathcal{M})} \times det(D) $$
+To simplify this expression to
 
-We can use the previous experession we found for the determinant of a block matrix as below
+$$ T = \frac{det(\Delta)}{det\left( \alpha - B \Delta^{-1} \Gamma\right) det( \Delta ) } $$
 
-$$ det(\mathcal{M}) = det\left( \alpha - \mathcal{B} \Delta^{-1} \Gamma\right) det( \Delta ) $$
-
-To simplify this expressionto
-
-$$ \mathcal{M}_{ij=11}^{-1} = \frac{det(\Delta)}{det\left( \alpha - \mathcal{B} \Delta^{-1} \Gamma\right) det( \Delta ) } $$
-
-$$ \mathcal{M}_{ij=11}^{-1} = \frac{1}{det\left( \alpha - \mathcal{B} \Delta^{-1} \Gamma\right)} $$
+$$ T = \frac{1}{det\left( \alpha - B \Delta^{-1} \Gamma\right)} $$
 
 Which, due to the form of each of these matrices, can further be simplified down to 
 
 ```math
-= \left(\alpha - \sum^{N}_{i=1} \frac{\mathcal{B}_i\Gamma_i}{\Delta_{ii}}\right)^{-1}
+= \left(\alpha - \sum^{N}_{i=1} \frac{B_i\Gamma_i}{\Delta_{ii}}\right)^{-1}
 ```
 
 QED
