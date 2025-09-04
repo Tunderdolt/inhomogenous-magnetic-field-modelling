@@ -1,9 +1,9 @@
-### Prove 
+### Claim 
 ```math
-T = (\omega_p I - \mathcal{H})^{-1}_{ij=11} \equiv \begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}^{-1}_{ij=11} = \left(\alpha - \sum^{N}_{i=1} \frac{B_i\Gamma_i}{\Delta_{ii}}\right)^{-1}
+T \equiv (\omega_p I - \mathcal{H})^{-1}_{ij=11} \equiv \begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}^{-1}_{ij=11} = \left(\alpha - \sum^{N}_{i=1} \frac{B_i\Gamma_i}{\Delta_{ii}}\right)^{-1}
 ```
 
-### Where $\omega_p \ \epsilon \ &#8477;$ and $\mathcal{H}$ is the Tavis-Cummings Hamiltonian in the single excitation subspace Hamiltonian, and
+### Where $\omega_p \ \epsilon \ &#8477;$, $\mathcal{H}$ is the Tavis-Cummings Hamiltonian in the single excitation subspace, and
 
 $$\begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}$$ 
 
@@ -11,7 +11,7 @@ $$\begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}$$
 ##
 ### Preliminaries
 
-For the single excitation subspace $\mathcal{H}$ (and hence $\omega_pI - \mathcal{H}$) have an arrowhead structure, i.e. the first row and column and the leading diagonal are the only populated elements within the system
+For the single excitation subspace, $\mathcal{H}$ (and hence $\omega_pI - \mathcal{H}$) has an arrowhead structure, i.e. the first row and column and the leading diagonal are the only populated elements within the system
 
 ```math
 \mathcal{H} \;=\;
@@ -25,19 +25,17 @@ c_n & 0 & 0 & 0 & 0 & d_n
 \end{pmatrix}
 ```
 
-It is convenient for us to define the following
+It is convenient for us to define the following block matrix
 
 $$ \Theta = \omega_pI - \mathcal{H} = \begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix} $$
 
-Where this is a block matrix. $\alpha$ is a scalar, $B$ is a row vector of size $1 \times (N-1))$, $\Gamma$ is a column vector or size $(N-1) \times 1$, and $\Delta$ is a square diagonal matrix of size $(N-1) \times (N-1)$, and N is the number of spins in the system.
+$\alpha$ is a scalar, $B$ is a row vector of size $1 \times N$, $\Gamma$ is a column vector or size $N \times 1$, and $\Delta$ is a square diagonal matrix of size $N \times N$, where N is the number of spins in the system.
 
 Now, we want to find $T$, which is defined as the following
 
 ```math
-T = \left(\omega_pI - \mathcal{H}\right)^{-1}_{ij=11} = \begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}^{-1}_{ij=11}
+T = \left(\omega_pI - \mathcal{H}\right)^{-1}_{ij=11} = \begin{pmatrix} \alpha & B \\\ \Gamma & \Delta \end{pmatrix}^{-1}_{ij=11} = \frac{det(\Delta)}{det(\Theta)}
 ```
-
-$$ T = \frac{det(\Delta)}{det(\Theta)} $$
 
 Now, $det(\Delta)$ is trivial as $\Delta$ is a diagonal matrix, however finding an expression for $det(\Theta)$ is more challenging.
 
