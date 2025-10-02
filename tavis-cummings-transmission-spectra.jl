@@ -52,52 +52,93 @@ function tavis_cummings(N, g, ω_c, ω_s, κ, γ; open_system=false)
         κ = 0
     end
 
-    # Ensure ω_s and γ are arrays
-    ω_s = isa(ω_s, AbstractArray) ? ω_s : fill(ω_s, N)
+    # Ensure γ, ω_s, and g are arrays
     γ   = isa(γ, AbstractArray) ? γ   : fill(γ, N)
+    ω_s = isa(ω_s, AbstractArray) ? ω_s : fill(ω_s, N)
+    g   = isa(g, AbstractArray) ? g   : fill(g, N)
+
     # Collect entries as triplets
     rows = Int[]
     cols = Int[]
     vals = ComplexF64[]
-    # cavity self-energy
+
+    # cavity term (row 1, col 1)
     push!(rows, 1); push!(cols, 1); push!(vals, ω_c + im*κ)
+
     # cavity–spin couplings (row 1, cols 2:N+1)
     append!(rows, fill(1, N))
     append!(cols, 2:N+1)
-    append!(vals, fill(im*g, N))
+    append!(vals, im.*g)
+
     # spin–cavity couplings (rows 2:N+1, col 1)
     append!(rows, 2:N+1)
     append!(cols, fill(1, N))
-    append!(vals, fill(-im*g, N))
-    # diagonal spin terms
+    append!(vals, -im.*g)
+
+    # diagonal spin terms (rows 2:N+1, cols 2:N+1)
     append!(rows, 2:N+1)
     append!(cols, 2:N+1)
     append!(vals, ω_s .+ im .* γ)
-    # Build sparse matrix in one pass
+
     H_matrix = sparse(rows, cols, vals, N+1, N+1)
-    # Wrap in operator
+
     b = NLevelBasis(N+1)
+
     return Operator(b, b, H_matrix)
 end
 
+function rand_q_gaussian(μ, q, std)
+    """Returns one random sample from a q-Gaussian distribution with mean μ,
+    entropic index q, and variance varience from a scaled Student’s 
+    t-distribution.
+    Parameters
+    ----------
+    μ :: Float
+        The mean of the distribution
+    q :: Float
+        The entropic index of the distribution
+    varience :: Float
+        The variance of the distribution
+    Returns
+    -------
+    Float
+        A random sample from the q-Gaussian distribution
+    """
+    if std == 0
+        return μ
+    end
+    ν = (3 - q) / (q - 1)
+    if ν <= 2
+        error("Degrees of freedom must be greater than 2 for finite variance.")
+    end
+    σ = sqrt(std^2 * (ν - 2) / ν)
+    d = LocationScale(μ, σ, TDist(ν))
+    return rand(d)
+end
+
 # Main =========================================================================
+N = Int(2e3)
 g = 1e7
 ω_c = 1e9
-ω_s = -100e9:840e6:110e9
-ω_p = -100e9:840e6:110e9
-ω_s = 0e9:8e6:2e9
-ω_p = 0e9:8e6:2e9
+min_freq = -1e9
+max_freq = 2*ω_c - min_freq
+resolution = 250
 κ = mean(g)/4
 γ = g/4
+
+std = 0
+μ = 0
+const q = 1.39
+freq_var = [rand_q_gaussian(μ, q, std) for _ in 1:N]
 
 T = []
 T_int = []
 T_p = []
 
-
-@showprogress for ω_s in ω_s
-    H = tavis_cummings(Int(100), g, ω_c, ω_s, κ, γ; open_system=true)
-    for ω_p in ω_p
+@showprogress for ω_s in range(min_freq, max_freq, length=resolution)
+    ω_s = ω_s .+ freq_var
+    H = tavis_cummings(N, g, ω_c, ω_s, κ, γ; open_system=true)
+    for ω_p in range(min_freq, max_freq, length=resolution)
         H_int = ω_p * I - H.data
         T_calc = (
             im * κ 
@@ -116,14 +157,15 @@ T_p = []
 end
 display(
     heatmap(
-        ω_s/ω_c, 
-        ω_p/ω_c, 
+        range(min_freq, max_freq, length=resolution)/ω_c, 
+        range(min_freq, max_freq, length=resolution)/ω_c, 
         stack(T),
         xlabel="\$ω_s/ω_c\$", 
         ylabel="\$ω_p/ω_c\$", 
         title="Transmission Spectrum",
         color=:thermal,
         colorbar_title="Transmission",
-        show=true
+        show=true,
+        clim=(-10, 0)
     )
 )
